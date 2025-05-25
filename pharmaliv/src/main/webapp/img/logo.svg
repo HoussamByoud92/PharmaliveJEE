@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="#2E7D32" />
+  <circle cx="256" cy="256" r="220" fill="#FFFFFF" />
+  
+  <!-- Cross Symbol -->
+  <rect x="236" y="116" width="40" height="280" rx="20" fill="#2E7D32" />
+  <rect x="116" y="236" width="280" height="40" rx="20" fill="#2E7D32" />
+  
+  <!-- Pill Shape -->
+  <g transform="rotate(45, 256, 256)">
+    <rect x="196" y="196" width="120" height="120" rx="60" fill="#1E88E5" opacity="0.8" />
+  </g>
+</svg>
