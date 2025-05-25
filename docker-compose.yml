@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_USER=pharmalive
+      - DB_PASSWORD=pharmalive_password
+      - DB_NAME=pharmalive
+    depends_on:
+      - db
+    restart: unless-stopped
+    
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=pharmalive
+      - MYSQL_USER=pharmalive
+      - MYSQL_PASSWORD=pharmalive_password
+      - MYSQL_ROOT_PASSWORD=root_password
+    volumes:
+      - ./pharmaliv/DB/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

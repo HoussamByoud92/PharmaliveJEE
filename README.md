@@ -30,6 +30,7 @@
 | Build Tool  | Maven                   |
 | IDE         | IntelliJ IDEA           |
 | Versioning  | Git + Azure DevOps      |
+| Deployment  | Docker, Azure Pipelines |
 
 ---
 
@@ -111,6 +112,95 @@ This will create a WAR file at:
    ```bash
    http://localhost:8080/pharmalive/login
    ```
+
+---
+
+## 🐳 Docker Deployment
+
+### 🔄 Build Docker Image
+
+Build the Docker image using the provided Dockerfile:
+
+```bash
+docker build -t pharmalive:latest .
+```
+
+### 🚀 Run Docker Container
+
+Run the container with default settings:
+
+```bash
+docker run -d -p 8080:8080 --name pharmalive-app pharmalive:latest
+```
+
+Access the application at:
+```bash
+http://localhost:8080/
+```
+
+### 🔧 Environment Variables
+
+The Docker container supports the following environment variables for database configuration:
+
+| Variable     | Default     | Description                  |
+|--------------|-------------|------------------------------|
+| DB_HOST      | mysql       | Database hostname/IP         |
+| DB_PORT      | 3306        | Database port                |
+| DB_NAME      | pharmalive  | Database name                |
+| DB_USER      | root        | Database username            |
+| DB_PASSWORD  | password    | Database password            |
+
+Example with custom database settings:
+
+```bash
+docker run -d -p 8080:8080 \
+  -e DB_HOST=db.example.com \
+  -e DB_USER=pharma_user \
+  -e DB_PASSWORD=secure_password \
+  --name pharmalive-app \
+  pharmalive:latest
+```
+
+### 🔗 Using with Docker Compose
+
+Create a `docker-compose.yml` file for easy deployment with MySQL:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_USER=pharmalive
+      - DB_PASSWORD=pharmalive_password
+      - DB_NAME=pharmalive
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_DATABASE=pharmalive
+      - MYSQL_USER=pharmalive
+      - MYSQL_PASSWORD=pharmalive_password
+      - MYSQL_ROOT_PASSWORD=root_password
+    volumes:
+      - ./pharmaliv/DB/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
+```
+
+Run with Docker Compose:
+
+```bash
+docker-compose up -d
+```
 
 ---
 
@@ -213,4 +303,3 @@ Project developed collaboratively by:
 
 N'hésitez pas à proposer des améliorations via pull request.
 ```
-
