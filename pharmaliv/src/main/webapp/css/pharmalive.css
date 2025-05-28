@@ -111,9 +111,10 @@ a:hover {
 }
 
 /* Fixed navbar */
-.navbar {
+.navbar, .navbar.navbar-dark {
     height: 56px;
     z-index: 1030;
+    background-color: var(--primary) !important;
 }
 
 /* Cards */
