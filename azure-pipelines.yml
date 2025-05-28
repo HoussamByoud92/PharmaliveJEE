@@ -16,9 +16,9 @@ steps:
     mavenPomFile: 'pharmaliv/pom.xml'
     goals: 'clean package'
     mavenVersionOption: 'Default'
-    options: '-Xmx1024m'
   env:
     JAVA_HOME: $(JAVA_HOME)
+    MAVEN_OPTS: '-Xmx1024m'
 
 - task: CopyFiles@2
   inputs:
