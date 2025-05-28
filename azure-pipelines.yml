@@ -14,7 +14,7 @@ steps:
 
 - task: Maven@3
   inputs:
-    mavenPomFile: 'pom.xml'
+    mavenPomFile: 'pharmaliv/pom.xml'
     goals: 'clean package'
     javaHomeOption: 'JDKVersion'
     jdkVersionOption: '1.17'  # Placeholder, overridden below
