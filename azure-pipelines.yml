@@ -1,129 +1,35 @@
-# Azure Pipeline for PharmaLiv Java Web Application
-# 
-# This pipeline builds and tests the PharmaLiv Java web application.
-# It performs the following steps:
-# 1. Attempts to set up Java 23 (with automatic fallback to Java 17 if 23 is not available)
-# 2. If using Java 17, automatically updates pom.xml to be compatible with Java 17
-# 3. Caches Maven packages to speed up builds
-# 4. Builds the application with Maven
-# 5. Runs tests and publishes test results
-# 6. Publishes the WAR file as a pipeline artifact
-#
-# To use this pipeline:
-# 1. Make sure you have an Azure DevOps project set up
-# 2. Connect your repository to Azure DevOps
-# 3. Create a new pipeline using this YAML file
-# 4. Uncomment and configure the deployment stage when ready to deploy
-#
-# Java Version Compatibility:
-# - The pipeline will first try to use Java 23 as specified in the pom.xml
-# - If Java 23 is not available, it will automatically fall back to Java 17
-# - When falling back to Java 17, the pipeline will automatically update the pom.xml
-#   to change all Java 23 references to Java 17
-# - This ensures the build will work regardless of which Java version is available
-
 trigger:
-  - main  # Trigger the pipeline on changes to the main branch
+- main  # Or your actual branch name
 
 pool:
-  vmImage: 'ubuntu-latest'  # Use the latest Ubuntu VM image
+  name: DevOps PRJ
+  demands:
+    - Agent.Name -equals NINETY2
 
 variables:
-  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
-  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
+  JAVA_HOME: 'C:\\Program Files\\Java\\jdk-23'
+  MAVEN_OPTS: '-Xmx1024m'
 
-stages:
-  - stage: Build
-    displayName: 'Build and Test'
-    jobs:
-      - job: BuildAndTest
-        displayName: 'Build and Test'
-        steps:
-          # Set up Java (try Java 23, fallback to Java 17 if not available)
-          - task: JavaToolInstaller@0
-            displayName: 'Set up Java'
-            inputs:
-              versionSpec: '23'
-              jdkArchitectureOption: 'x64'
-              jdkSourceOption: 'PreInstalled'
-            continueOnError: true
-            name: setupJava23
+steps:
 
-          # Fallback to Java 17 if Java 23 is not available
-          - task: JavaToolInstaller@0
-            displayName: 'Set up Java 17 (fallback)'
-            inputs:
-              versionSpec: '17'
-              jdkArchitectureOption: 'x64'
-              jdkSourceOption: 'PreInstalled'
-            condition: failed('setupJava23')
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    goals: 'clean package'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.17'  # Placeholder, overridden below
+    mavenVersionOption: 'Default'
+    options: '-Xmx1024m'
+  env:
+    JAVA_HOME: $(JAVA_HOME)
 
-          # Cache Maven packages to speed up builds
-          - task: Cache@2
-            displayName: 'Cache Maven packages'
-            inputs:
-              key: 'maven | "$(Agent.OS)" | **/pom.xml'
-              restoreKeys: |
-                maven | "$(Agent.OS)"
-                maven
-              path: $(MAVEN_CACHE_FOLDER)
+- task: CopyFiles@2
+  inputs:
+    contents: '**/target/*.war'
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
 
-          # Build with Maven
-          - task: Maven@3
-            displayName: 'Build with Maven'
-            inputs:
-              mavenPomFile: 'pharmaliv/pom.xml'
-              goals: 'clean package'
-              options: '-B -Dmaven.test.failure.ignore=true'
-              publishJUnitResults: true
-              testResultsFiles: '**/surefire-reports/TEST-*.xml'
-              javaHomeOption: 'JDKVersion'
-              # Use the installed JDK (either 23 or 17)
-              jdkVersionOption: '1.17'
-              mavenVersionOption: 'Default'
-              mavenOptions: '$(MAVEN_OPTS)'
-
-          # If using Java 17 instead of 23, we need to update the pom.xml
-          - task: PowerShell@2
-            displayName: 'Update pom.xml if using Java 17'
-            condition: failed('setupJava23')
-            inputs:
-              targetType: 'inline'
-              script: |
-                Write-Host "Updating pom.xml to use Java 17 instead of 23"
-                $pomFile = "pharmaliv/pom.xml"
-                $pomContent = Get-Content $pomFile -Raw
-                $pomContent = $pomContent -replace '<maven.compiler.source>23</maven.compiler.source>', '<maven.compiler.source>17</maven.compiler.source>'
-                $pomContent = $pomContent -replace '<maven.compiler.target>23</maven.compiler.target>', '<maven.compiler.target>17</maven.compiler.target>'
-                $pomContent = $pomContent -replace '<release>23</release>', '<release>17</release>'
-                Set-Content -Path $pomFile -Value $pomContent
-                Write-Host "pom.xml updated to use Java 17"
-
-          # Publish the WAR file as an artifact
-          - task: PublishPipelineArtifact@1
-            displayName: 'Publish WAR file'
-            inputs:
-              targetPath: 'pharmaliv/target/pharmaliv-1.0-SNAPSHOT.war'
-              artifact: 'pharmaliv-war'
-              publishLocation: 'pipeline'
-
-  # Deployment stage can be added here when deployment information is available
-  # - stage: Deploy
-  #   displayName: 'Deploy to Azure App Service'
-  #   dependsOn: Build
-  #   condition: succeeded()
-  #   jobs:
-  #     - job: Deploy
-  #       displayName: 'Deploy to App Service'
-  #       steps:
-  #         - task: DownloadPipelineArtifact@2
-  #           inputs:
-  #             artifactName: 'pharmaliv-war'
-  #             downloadPath: '$(System.ArtifactsDirectory)'
-  #
-  #         - task: AzureWebApp@1
-  #           inputs:
-  #             azureSubscription: 'Your-Azure-Subscription'
-  #             appName: 'pharmaliv-app'
-  #             package: '$(System.ArtifactsDirectory)/pharmaliv-1.0-SNAPSHOT.war'
-  #             deploymentMethod: 'auto'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'pharmaliv-war'
+    publishLocation: 'Container'
