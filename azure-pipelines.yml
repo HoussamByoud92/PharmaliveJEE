@@ -16,8 +16,6 @@ steps:
   inputs:
     mavenPomFile: 'pharmaliv/pom.xml'
     goals: 'clean package'
-    javaHomeOption: 'JDKVersion'
-    jdkVersionOption: '1.17'  # Placeholder, overridden below
     mavenVersionOption: 'Default'
     options: '-Xmx1024m'
   env:
